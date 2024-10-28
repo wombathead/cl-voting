@@ -26,41 +26,9 @@
   (not (ordering< x y ordering)))
 
 
-(defun rank-profile->score-profile (rank scoring-rule )
-
-  )
-
-
-(defun main ()
-
-  )
-
-(loop with partial = '((a b c))
-      for manipulation in (all-permutations '(a b c))
-      for profile = (append partial (list manipulation))
-      for outcome = (multiwinner-golden-ticket-k-approval 2 2 profile)
-      do (progn
-           (format t "~%Profile: ~A, Outcome: ~A"
-                   profile
-                   outcome
-                   )
-           )
-      )
-
-;; iterate over fixed votes of the other player
-(loop initially (format t "~%~%Starting~%~%")
-      for partial in (all-permutations '(a b c))
-      do (progn
-           (loop with sincere = '(a b c)
-                 for report in (all-permutations sincere)
-                 for profile = (cons report (list partial))
-                 for outcome = (multiwinner-golden-ticket-k-approval 2 2 profile)
-                 do (progn
-                      (format t "Outcome on ~A: ~A~%" profile outcome))
-                    finally (terpri))))
-
 
 (defun manipulations-leading-to-outcome (partial-profile desired-outcome candidates voting-rule)
+  "TODO"
   (loop for bid in (all-permutations candidates)
         for profile = (cons bid (list partial-profile)) ;; TODO: make work with partial profiles that are already lists
         for outcome = (funcall voting-rule profile)
@@ -68,6 +36,7 @@
           collect bid))
 
 (defun 2x2-game-as-bimatrix (ordering>-1 ordering>-2 candidates)
+  "TODO"
   (loop initially (format t "~%~%~A~%~%" (all-permutations candidates))
 
         with ordering>-fn-1 = (define-ordering> ordering>-1)
@@ -84,3 +53,30 @@
         )
 
   )
+
+
+(defun rank-profile->score-profile (rank scoring-rule )
+  "TODO"
+  )
+
+
+(defun plot-2x2-outcomes (candidates &optional (tie-breaking-rule (define-ordering> candidates)))
+  (let ((all-rankings (all-permutations candidates)))
+    (loop initially (progn
+                      (format t "~%~%Starting~%~%")
+                      (format t "~10@t~{~A~^~t~}~%" all-rankings))
+
+          for partial in all-rankings
+          do (progn
+               (loop initially (format t "~8@A~t" partial)
+                     with sincere = candidates
+                     for report in all-rankings
+                     for profile = (cons report (list partial))
+                     for outcome = (multiwinner-golden-ticket-k-approval
+                                    2 2 profile tie-breaking-rule)
+                     collect outcome into outcomes
+                     finally (format t "~{~7@A~t~}~%" outcomes))))))
+
+
+(plot-2x2-outcomes '(a b c) (define-ordering> '(a b c)))    ; tie-break in 1's favour
+(plot-2x2-outcomes '(a b c) (define-ordering> '(b c a)))    ; tie-break in 1's favour

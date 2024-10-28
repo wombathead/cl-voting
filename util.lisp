@@ -43,3 +43,7 @@
         (t (loop for element in list
                  append (mapcar (lambda (l) (cons element l))
                                 (all-permutations (remove element list)))))))
+
+
+(defun select-random (list)
+  (nth (random (length list)) list))
