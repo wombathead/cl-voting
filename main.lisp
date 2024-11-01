@@ -1,31 +1,6 @@
 (in-package #:cl-voting)
 
 
-(defun define-ordering> (elements)
-  "Define a total order ELEMENTS = (A B C D ...) = A > B > C > D > ..."
-  (lambda (x y) (< (position x elements) (position y elements))))
-
-
-(defun define-ordering< (elements)
-  (define-ordering> (reverse elements)))
-
-
-(defun ordering> (x y ordering)
-  (funcall ordering x y))
-
-
-(defun ordering< (x y ordering)
-  (ordering> y x ordering))
-
-
-(defun ordering<= (x y ordering)
-  (not (ordering> x y ordering)))
-
-
-(defun ordering>= (x y ordering)
-  (not (ordering< x y ordering)))
-
-
 
 (defun manipulations-leading-to-outcome (partial-profile desired-outcome candidates voting-rule)
   "TODO"
@@ -60,6 +35,25 @@
   )
 
 
+(defun plot-2x2-rule-outcomes (candidates voting-rule &optional (tie-breaking-rule (define-ordering> candidates)))
+  ;; TODO: make the voting rule REQUIRE a tie breaking rule I think.
+  (let ((all-rankings (all-permutations candidates)))
+    (loop initially (progn
+                      (format t "~%~%Starting~%~%")
+                      (format t "~10@t~{~A~^~t~}~%" all-rankings))
+
+          for partial in all-rankings
+          do (progn
+               (loop initially (format t "~8@A~t" partial)
+                     with sincere = candidates
+                     for report in all-rankings
+                     for profile = (cons report (list partial))
+                     for outcome = (funcall voting-rule profile tie-breaking-rule)
+
+                     collect outcome into outcomes
+                     finally (format t "~{~7@A~t~}~%" outcomes))))))
+
+
 (defun plot-2x2-outcomes (candidates &optional (tie-breaking-rule (define-ordering> candidates)))
   (let ((all-rankings (all-permutations candidates)))
     (loop initially (progn
@@ -72,11 +66,18 @@
                      with sincere = candidates
                      for report in all-rankings
                      for profile = (cons report (list partial))
-                     for outcome = (multiwinner-golden-ticket-k-approval
-                                    2 2 profile tie-breaking-rule)
+                     for outcome = (multiwinner-golden-ticket-k-approval 2 2 profile tie-breaking-rule)
+
                      collect outcome into outcomes
                      finally (format t "~{~7@A~t~}~%" outcomes))))))
 
 
-(plot-2x2-outcomes '(a b c) (define-ordering> '(a b c)))    ; tie-break in 1's favour
-(plot-2x2-outcomes '(a b c) (define-ordering> '(b c a)))    ; tie-break in 1's favour
+(let* ((candidates '(a b c d e))
+       (m (length candidates))
+       (profile '((a b c d e)
+                  (b a d e c)
+                  (b c e a d)))
+       (n (length profile))
+       (rule (define-golden-ticket-k-approval m 2 n 3 candidates)))
+
+  (print (compute-voting-rule rule profile)))
